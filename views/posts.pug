@@ -1,0 +1,87 @@
+doctype html
+html(lang="ja")
+  head
+    //- 文字化けしないように
+    meta(charset="UTF-8")
+    //- Bootstrap導入のため
+    link(rel="stylesheet",
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm",
+    crossorigin="anonymous")
+
+    title 秘密の匿名掲示板
+  //- container : コンテナクラスは、左右に余白を入れてくれる
+  body.container
+    //- my-3 : マージン (m) を上と下 (y) に３入れる
+    div.my-3
+      //- ログアウトボタン
+      //- btn.btn-info : ボタンにする.緑色のデザイン
+      //- float-right : 右側に移動
+      a(href="/logout").btn.btn-info.float-right ログアウト
+      h1 秘密の匿名掲示板
+    h2 新規投稿
+    form(method="post" action="/posts")
+      div.form-group
+        //- 投稿フォーム（ 40文字 × 4行 ）
+        //- "content" = 入力されたテキスト
+        textarea(name="content" cols=40 rows=4).form-control
+        //- ワンタイムトークンを埋め込む
+        input(type="hidden" name="oneTimeToken" value=oneTimeToken)
+      div.form-group
+        //- 投稿ボタン
+        button(type="submit").btn.btn-primary 投稿
+
+    h2 投稿一覧
+    //- each-in構文　ループ機能
+    each post in posts
+      //- カードデザイン
+      div.card.my-3
+        //- [[ヘッダー]]
+        div.card-header
+          //- 先頭に - : その行はJavaScriptを実装できる
+          //- ispostedbyAdmin : 管理者かどうか
+          - var isPostedByAdmin = (post.postedBy === 'admin')
+          if isPostedByAdmin
+            span #{post.id} : 管理人 ★
+          else
+            //- ハッシュ値の部分は見えないようにする
+            //- 元々のトラッキングIDを利用する
+            - var originalTrackingId = post.trackingCookie ? post.trackingCookie.split('_')[0] : ''
+            span #{post.id} : ID:#{originalTrackingId}
+        //- TODO : タグをタグと認識するための p!=post.content は？(3-26) 
+        //- [[ボディ]]
+        div.card-body
+          //- "white-space:pre" : ソース中の連続する半角スペース、タブ、改行をそのまま表示。 自動的な折り返しは行わない。
+          //- "overflow:auto" : ボックスに入りきらない内容は一般的にはスクロールで表示。
+          //- pug には XSS を防ぐためのエスケープ処理が実装されている。
+          p.card-text(style="white-space:pre; overflow:auto;") #{post.content}
+        //- [[フッター]]
+        div.card-footer
+          div 投稿日時: #{post.formattedCreatedAt}
+          //- isAdmin : 管理人である
+          - var isAdmin = (user === 'admin')
+          if isAdmin
+            div 投稿者: #{post.postedBy}
+          //- 先頭に - : JavaScriptのコードを書くことができる
+            //- var 変数名 = 代入するもの
+            //- isXXXX : blean型（true, faulsが入る）
+            //- isDeletable 消せるかどうか
+              //- user : 閲覧者
+              //- post.postedBy : 投稿者
+              //- || isAdmin : または 管理者
+          - var isDeletable = (user === post.postedBy || isAdmin)
+          //- trueの時は削除ボタンが出てくる
+          if isDeletable
+            form(method="post" action="/posts?delete=1")
+              //- "hidden" : 画面には非表示の部品
+              //- post.id : 何番目の投稿か（=> このIDを使って削除処理を行う）
+              input(type="hidden" name="id" value=post.id)
+              input(type="hidden" name="oneTimeToken" value=oneTimeToken)
+              //- "submit" : 提出ボタン
+              //- ボタンを作る.ボタン色は赤.位置は右下
+              button(type="submit").btn.btn-danger.float-right 削除
+    //- Bootstrap
+    script(src="https://code.jquery.com/jquery-3.4.1.slim.min.js")
+    script(src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js",
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl",
+    crossorigin="anonymous")
