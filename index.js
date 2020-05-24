@@ -35,7 +35,7 @@ const server = http.createServer(basic, (req, res) => {
 });
 
 // httpが起動するポートを宣言
-const port = 8000;
+const port = process.env.PORT || 8000;
 
 // サーバーを起動する関数をlisten関数
 server.listen(port, () => {
